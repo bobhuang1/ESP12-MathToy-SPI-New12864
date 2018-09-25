@@ -172,7 +172,7 @@ void loop() {
     lightLevelSum += lightLevel[i];
   }
 
-  lightLevelSum = (lightLevelSum / 10);
+  lightLevelSum = (lightLevelSum / 10) - 50;
   Serial.print("Backlight: ");
   Serial.println(lightLevelSum);
   if (lightLevelSum < 10)
