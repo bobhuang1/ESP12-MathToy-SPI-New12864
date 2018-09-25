@@ -172,7 +172,7 @@ void loop() {
     lightLevelSum += lightLevel[i];
   }
 
-  lightLevelSum = (lightLevelSum / 10) - 100;
+  lightLevelSum = (lightLevelSum / 10);
   Serial.print("Backlight: ");
   Serial.println(lightLevelSum);
   if (lightLevelSum < 10)
@@ -306,7 +306,7 @@ void draw(void) {
   char buff[20];
   sprintf_P(buff, PSTR("%02d:%02d"), timeInfo->tm_hour, timeInfo->tm_min);
 
-  display.setFont(u8g2_font_6x13_tn); // u8g2_font_helvB08_tf
+  display.setFont(u8g2_font_helvB10_tf); // u8g2_font_helvB08_tf, u8g2_font_6x13_tn
   display.setCursor(1, 1);
   display.print(questionCount);
   display.print("/");
@@ -315,7 +315,7 @@ void draw(void) {
   display.setCursor(90, 1);
   display.print(buff);
 
-  display.setFont(u8g2_font_10x20_tf); // u8g2_font_helvB08_tf
+  display.setFont(u8g2_font_helvB18_tf); // u8g2_font_helvB08_tf, u8g2_font_10x20_tf
   int stringWidth = display.getStrWidth(string2char(currentAnswer));
   display.setCursor((128 - stringWidth) / 2, 28);
   if (currentMode == 0)
