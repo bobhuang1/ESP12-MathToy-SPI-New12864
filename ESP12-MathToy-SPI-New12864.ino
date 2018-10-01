@@ -47,40 +47,89 @@ String divideSign = String((char)247);
 int currentMode = 0; // 0 - show question, 1 - show answer
 String currentQuestion = "";
 String currentAnswer = "";
+String strPlusSign = "+";
+String strMinusSign = "-";
+String strMultiplySign = "X";
+String strDivideySign = String((char)247);
+String strEqualSign = "=";
 
 void generateQuestion() {
-  int questionType = random(1, 4); // 1 - plus, 2 - minus, 3 - multiply
-  int firstNumber = 1;
-  int secondNumber = 1;
-  if (questionType == 1 || questionType == 2)
+  int intFirstOperationType = random(1, 4); // 1 - plus, 2 - minus, 3 - multiply
+  int intSecondOperationType = 1;
+  int intFirstNumber = 1;
+  int intSecondNumber = 1;
+  int intThirdNumber = 1;
+
+  if (intFirstOperationType == 3)
   {
-    // plus or minus
-    firstNumber = random(1, 100);
-    secondNumber = random(1, 100);
-    if (questionType == 1)
+    intSecondOperationType = random(1, 3);
+    intFirstNumber = random(1, 10);
+    intSecondNumber = random(1, 10);
+    if (intSecondOperationType == 2)
     {
-      currentQuestion = String(firstNumber) + "+" + String(secondNumber) + "=";
-      currentAnswer = currentQuestion + String(firstNumber + secondNumber);
+      intThirdNumber = random(1, intFirstNumber * intSecondNumber);
+      currentQuestion =  String(intFirstNumber) + strMultiplySign + String(intSecondNumber) + strMinusSign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strMultiplySign + String(intSecondNumber) + strMinusSign + String(intThirdNumber) + strEqualSign + String(intFirstNumber * intSecondNumber - intThirdNumber);
     }
     else
     {
-      if (secondNumber > firstNumber)
-      {
-        int tempNumber = firstNumber;
-        firstNumber = secondNumber;
-        secondNumber = tempNumber;
-      }
-      currentQuestion = String(firstNumber) + "-" + String(secondNumber) + "=";
-      currentAnswer = currentQuestion + String(firstNumber - secondNumber);
+      intThirdNumber = random(1, 100);
+      currentQuestion =  String(intFirstNumber) + strMultiplySign + String(intSecondNumber) + strPlusSign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strMultiplySign + String(intSecondNumber) + strPlusSign + String(intThirdNumber) + strEqualSign + String(intFirstNumber * intSecondNumber + intThirdNumber);
     }
   }
-  else if (questionType == 3)
+  else if (intFirstOperationType == 2)
   {
-    // multiply
-    firstNumber = random(2, 10);
-    secondNumber = random(2, 10);
-    currentQuestion = String(firstNumber) + "X" + String(secondNumber) + "=";
-    currentAnswer = currentQuestion + String(firstNumber * secondNumber);
+    intSecondOperationType = random(1, 4);
+    intFirstNumber = random(50, 100);
+    if (intSecondOperationType == 1)
+    {
+      intSecondNumber = random(0, intFirstNumber);
+      intThirdNumber = random(1, 100);
+      currentQuestion =  String(intFirstNumber) + strMinusSign + String(intSecondNumber) + strPlusSign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strMinusSign + String(intSecondNumber) + strPlusSign + String(intThirdNumber) + strEqualSign + String(intFirstNumber - intSecondNumber + intThirdNumber);
+    }
+    else if (intSecondOperationType == 2)
+    {
+      intSecondNumber = random(30, intFirstNumber);
+      intThirdNumber = random(1, (intFirstNumber - intSecondNumber));
+      currentQuestion =  String(intFirstNumber) + strMinusSign + String(intSecondNumber) + strMinusSign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strMinusSign + String(intSecondNumber) + strMinusSign + String(intThirdNumber) + strEqualSign + String(intFirstNumber - intSecondNumber - intThirdNumber);
+    }
+    else // multiply
+    {
+      intSecondNumber = random(1, 10);
+      intThirdNumber = random(1, 10);
+      intFirstNumber = random(intSecondNumber * intThirdNumber, 100);
+      currentQuestion =  String(intFirstNumber) + strMinusSign + String(intSecondNumber) + strMultiplySign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strMinusSign + String(intSecondNumber) + strMultiplySign + String(intThirdNumber) + strEqualSign + String(intFirstNumber - (intSecondNumber * intThirdNumber));
+    }
+  }
+  else // first operation is plus
+  {
+    intSecondOperationType = random(1, 4);
+    intFirstNumber = random(1, 100);
+    if (intSecondOperationType == 1)
+    {
+      intSecondNumber = random(1, 100);
+      intThirdNumber = random(1, 100);
+      currentQuestion =  String(intFirstNumber) + strPlusSign + String(intSecondNumber) + strPlusSign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strPlusSign + String(intSecondNumber) + strPlusSign + String(intThirdNumber) + strEqualSign + String(intFirstNumber + intSecondNumber + intThirdNumber);
+    }
+    else if (intSecondOperationType == 2)
+    {
+      intSecondNumber = random(1, 100);
+      intThirdNumber = random(1, (intFirstNumber - intSecondNumber));
+      currentQuestion =  String(intFirstNumber) + strPlusSign + String(intSecondNumber) + strMinusSign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strPlusSign + String(intSecondNumber) + strMinusSign + String(intThirdNumber) + strEqualSign + String(intFirstNumber + intSecondNumber - intThirdNumber);
+    }
+    else
+    {
+      intSecondNumber = random(1, 10);
+      intThirdNumber = random(1, 10);
+      currentQuestion =  String(intFirstNumber) + strPlusSign + String(intSecondNumber) + strMultiplySign + String(intThirdNumber) + strEqualSign + "?";
+      currentAnswer = String(intFirstNumber) + strPlusSign + String(intSecondNumber) + strMultiplySign + String(intThirdNumber) + strEqualSign + String(intFirstNumber + (intSecondNumber * intThirdNumber));
+    }
   }
 }
 
@@ -311,11 +360,11 @@ void draw(void) {
   display.print(questionCount);
   display.print("/");
   display.print(questionTotal);
-  
+
   display.setCursor(90, 1);
   display.print(buff);
 
-  display.setFont(u8g2_font_helvB18_tf); // u8g2_font_helvB08_tf, u8g2_font_10x20_tf
+  display.setFont(u8g2_font_helvB12_tf); // u8g2_font_helvB08_tf, u8g2_font_10x20_tf
   int stringWidth = display.getStrWidth(string2char(currentAnswer));
   display.setCursor((128 - stringWidth) / 2, 28);
   if (currentMode == 0)
