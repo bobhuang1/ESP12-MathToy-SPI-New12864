@@ -145,6 +145,7 @@ void setup() {
   }
   display.begin();
   display.setFontPosTop();
+  display.setContrast(128);
 
   Serial.begin(115200);
   Serial.println("Scan WIFI");
