@@ -8,12 +8,13 @@
 #include <U8g2lib.h>
 #include <SPI.h>
 #include <WiFiManager.h>
+#include "MathImages.h"
 
 #define USE_WIFI_MANAGER 0    // 0 to NOT use WiFi manager, 1 to use
 #define USE_HIGH_ALARM 1      // 0 - LOW alarm sounds, 1 - HIGH alarm sounds
 #define ALARMPIN 5
 
-#define BACKLIGHTPIN 2
+#define BACKLIGHTPIN 0
 #define BUTTONPIN  4
 
 const char CompileDate[] = __DATE__;
@@ -29,7 +30,7 @@ const char* WIFI_PWD[] = {"tianwanggaidihu", "tianwanggaidihu", "tianwanggaidihu
 #define DST_SEC         ((DST_MN)*60)
 
 // 1 CS, 2 Reset, 3 RS/DC, 4 Clock, 5 SID(data)
-U8G2_ST7565_LM6059_1_4W_SW_SPI display(U8G2_R2, /* clock=*/ 14, /* data=*/ 12, /* cs=*/ 13, /* dc=*/ 15, /* reset=*/ 16);
+U8G2_ST7565_LM6059_F_4W_SW_SPI display(U8G2_R2, /* clock=*/ 14, /* data=*/ 12, /* cs=*/ 13, /* dc=*/ 2, /* reset=*/ 16);
 
 time_t nowTime;
 uint8_t draw_state = 0;
@@ -135,28 +136,42 @@ void generateQuestion() {
 
 void setup() {
   delay(100);
-  pinMode(ALARMPIN, OUTPUT);
-  pinMode(BACKLIGHTPIN, OUTPUT);
-  analogWrite(BACKLIGHTPIN, 900); // Maximum is 1023
-  shortBeep();
+  Serial.begin(115200);
+  Serial.println("Begin");
   for (int i = 0; i < 10; ++i)
   {
     lightLevel[i] = analogRead(A0); // initialize array with values
   }
+  
+  pinMode(BUTTONPIN, INPUT);
+  pinMode(ALARMPIN, OUTPUT);
+  pinMode(BACKLIGHTPIN, OUTPUT);
+  analogWrite(BACKLIGHTPIN, 900); // Maximum is 1023
+#if (USE_HIGH_ALARM > 0)
+  digitalWrite(ALARMPIN, LOW); // Turn off alarm
+#else
+  digitalWrite(ALARMPIN, HIGH); // Turn off alarm
+#endif
+
   display.begin();
   display.setFontPosTop();
-  display.setContrast(128);
+  display.setContrast(133);
 
-  Serial.begin(115200);
-  Serial.println("Scan WIFI");
+  display.clearBuffer();
+  display.drawXBM(31, 0, 66, 64, garfield);
+  display.sendBuffer();
+  shortBeep();
+  delay(1000);
 
 #if USE_WIFI_MANAGER > 0
   WiFi.persistent(true);
   WiFiManager wifiManager;
   wifiManager.setConfigPortalTimeout(600);
-  wifiManager.autoConnect("IBEClock12864-HW");
-  Serial.println("Please connect WiFi IBEClock12864-HW");
+  wifiManager.autoConnect("IBEMath12864");
+  Serial.println("Please connect WiFi IBEMath12864");
+  drawProgress(display, "请用手机设置本机WIFI", "SSID IBEMath12864");
 #else
+  Serial.println("Scan WIFI");
   int intPreferredWIFI = 0;
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
@@ -184,6 +199,7 @@ void setup() {
 
   WiFi.persistent(true);
   WiFi.begin(WIFI_SSID[intPreferredWIFI], WIFI_PWD[intPreferredWIFI]);
+  drawProgress(display, "正在连接WIFI", WIFI_SSID[intPreferredWIFI]);
   int WIFIcounter = intPreferredWIFI;
   while (WiFi.status() != WL_CONNECTED) {
     int counter = 0;
@@ -198,6 +214,7 @@ void setup() {
     WIFIcounter++;
     if (WIFIcounter >= numWIFIs) WIFIcounter = 0;
     WiFi.begin(WIFI_SSID[WIFIcounter], WIFI_PWD[WIFIcounter]);
+    drawProgress(display, "正在连接WIFI...", WIFI_SSID[WIFIcounter]);
   }
 #endif
 
@@ -205,6 +222,7 @@ void setup() {
 
   // Get time from network time service
   Serial.println("WIFI Connected");
+  drawProgress(display, "连接WIFI成功,", "正在同步时间...");
   configTime(TZ_SEC, DST_SEC, "pool.ntp.org");
   generateQuestion();
   questionCount = 1;
@@ -378,6 +396,26 @@ void draw(void) {
   }
 }
 
+void drawProgress(U8G2_ST7565_LM6059_F_4W_SW_SPI display, String labelLine1, String labelLine2) {
+  display.clearBuffer();
+  display.enableUTF8Print();
+  display.setFont(u8g2_font_wqy12_t_gb2312a); // u8g2_font_wqy12_t_gb2312a, u8g2_font_helvB08_tf
+  int stringWidth = 1;
+  if (labelLine1 != "")
+  {
+    stringWidth = display.getUTF8Width(string2char(labelLine1));
+    display.setCursor((128 - stringWidth) / 2, 13);
+    display.print(labelLine1);
+  }
+  if (labelLine2 != "")
+  {
+    stringWidth = display.getUTF8Width(string2char(labelLine2));
+    display.setCursor((128 - stringWidth) / 2, 36);
+    display.print(labelLine2);
+  }
+  display.disableUTF8Print();
+  display.sendBuffer();
+}
 
 /*
 
@@ -392,6 +430,13 @@ void draw(void) {
 */
 // each Chinese character's length is 3 in UTF-8
 
+char* string2char(String command) {
+  if (command.length() != 0) {
+    char *p = const_cast<char*>(command.c_str());
+    return p;
+  }
+}
+
 void shortBeep() {
 #if (USE_HIGH_ALARM > 0)
   digitalWrite(ALARMPIN, HIGH);
@@ -404,10 +449,15 @@ void shortBeep() {
 #endif
 }
 
-char* string2char(String command) {
-  if (command.length() != 0) {
-    char *p = const_cast<char*>(command.c_str());
-    return p;
-  }
+void longBeep() {
+#if (USE_HIGH_ALARM > 0)
+  digitalWrite(ALARMPIN, HIGH);
+  delay(2000);
+  digitalWrite(ALARMPIN, LOW);
+#else
+  digitalWrite(ALARMPIN, LOW);
+  delay(2000);
+  digitalWrite(ALARMPIN, HIGH);
+#endif
 }
 
