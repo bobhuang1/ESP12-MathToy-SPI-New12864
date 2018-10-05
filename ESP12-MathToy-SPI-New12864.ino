@@ -199,7 +199,7 @@ void setup() {
 
   WiFi.persistent(true);
   WiFi.begin(WIFI_SSID[intPreferredWIFI], WIFI_PWD[intPreferredWIFI]);
-  drawProgress(display, "正在连接WIFI", WIFI_SSID[intPreferredWIFI]);
+  drawProgress(display, "正在连接WIFI...", WIFI_SSID[intPreferredWIFI]);
   int WIFIcounter = intPreferredWIFI;
   while (WiFi.status() != WL_CONNECTED) {
     int counter = 0;
