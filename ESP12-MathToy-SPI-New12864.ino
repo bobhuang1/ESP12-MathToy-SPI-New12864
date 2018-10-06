@@ -142,7 +142,7 @@ void setup() {
   {
     lightLevel[i] = analogRead(A0); // initialize array with values
   }
-  
+
   pinMode(BUTTONPIN, INPUT);
   pinMode(ALARMPIN, OUTPUT);
   pinMode(BACKLIGHTPIN, OUTPUT);
@@ -228,7 +228,41 @@ void setup() {
   questionCount = 1;
 }
 
-void loop() {
+void detectButtonPush() {
+  int reading;
+  reading = digitalRead(BUTTONPIN);
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+  if ((millis() - lastDebounceTime) > debounceDelay)
+  {
+    if (reading != buttonState)
+    {
+      buttonState = reading;
+      if (buttonState == HIGH)
+      {
+        shortBeep();
+        if (currentMode == 0)
+        {
+          currentMode = 1;
+        }
+        else
+        {
+          currentMode = 0;
+          generateQuestion();
+          questionCount++;
+          if (questionCount >= questionTotal + 1)
+          {
+            questionCount = 1;
+          }
+        }
+      }
+    }
+  }
+  lastButtonState = reading;
+}
+
+void adjustBacklight() {
   for (int i = 0; i < 9; ++i)
   {
     lightLevel[i] = lightLevel[i + 1]; // shift value forward
@@ -291,75 +325,20 @@ void loop() {
   {
     analogWrite(BACKLIGHTPIN, 50); // Maximum is 1023
   }
+}
 
-  int reading;
+void loop() {
+  adjustBacklight();
+
   display.firstPage();
   do {
-    reading = digitalRead(BUTTONPIN);
-    if (reading != lastButtonState) {
-      lastDebounceTime = millis();
-    }
-    if ((millis() - lastDebounceTime) > debounceDelay)
-    {
-      if (reading != buttonState)
-      {
-        buttonState = reading;
-        if (buttonState == HIGH)
-        {
-          shortBeep();
-          if (currentMode == 0)
-          {
-            currentMode = 1;
-          }
-          else
-          {
-            currentMode = 0;
-            generateQuestion();
-            questionCount++;
-            if (questionCount >= questionTotal + 1)
-            {
-              questionCount = 1;
-            }
-          }
-        }
-      }
-    }
-    lastButtonState = reading;
+    detectButtonPush();
     draw();
-    delay(100);
+    //    delay(100);
     draw_state++;
   } while (display.nextPage());
 
-  reading = digitalRead(BUTTONPIN);
-  if (reading != lastButtonState) {
-    lastDebounceTime = millis();
-  }
-  if ((millis() - lastDebounceTime) > debounceDelay)
-  {
-    if (reading != buttonState)
-    {
-      buttonState = reading;
-      if (buttonState == HIGH)
-      {
-        shortBeep();
-        if (currentMode == 0)
-        {
-          currentMode = 1;
-        }
-        else
-        {
-          currentMode = 0;
-          generateQuestion();
-          questionCount++;
-          if (questionCount >= questionTotal + 1)
-          {
-            questionCount = 1;
-          }
-        }
-      }
-    }
-  }
-  lastButtonState = reading;
+  detectButtonPush();
 
   if (draw_state >= 10)
   {
