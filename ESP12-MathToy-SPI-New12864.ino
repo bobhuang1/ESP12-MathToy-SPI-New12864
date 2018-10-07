@@ -378,7 +378,7 @@ void draw(void) {
 void drawProgress(U8G2_ST7565_LM6059_F_4W_SW_SPI display, String labelLine1, String labelLine2) {
   display.clearBuffer();
   display.enableUTF8Print();
-  display.setFont(u8g2_font_wqy12_t_gb2312a); // u8g2_font_wqy12_t_gb2312a, u8g2_font_helvB08_tf
+  display.setFont(u8g2_font_wqy12_t_gb2312); // u8g2_font_wqy12_t_gb2312, u8g2_font_helvB08_tf
   int stringWidth = 1;
   if (labelLine1 != "")
   {
