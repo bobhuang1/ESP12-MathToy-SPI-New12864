@@ -10,10 +10,10 @@
 #include <WiFiManager.h>
 #include "MathImages.h"
 
-#define USE_WIFI_MANAGER 0    // 0 to NOT use WiFi manager, 1 to use
-#define USE_HIGH_ALARM 1      // 0 - LOW alarm sounds, 1 - HIGH alarm sounds
-#define ALARMPIN 5
+//#define USE_WIFI_MANAGER     // disable to NOT use WiFi manager, enable to use
+#define USE_HIGH_ALARM       // disable - LOW alarm sounds, enable - HIGH alarm sounds
 
+#define ALARMPIN 5
 #define BACKLIGHTPIN 0
 #define BUTTONPIN  4
 
@@ -29,7 +29,6 @@ const char* WIFI_PWD[] = {"tianwanggaidihu", "tianwanggaidihu", "tianwanggaidihu
 #define TZ_SEC          ((TZ)*3600)
 #define DST_SEC         ((DST_MN)*60)
 
-// 1 CS, 2 Reset, 3 RS/DC, 4 Clock, 5 SID(data)
 U8G2_ST7565_LM6059_F_4W_SW_SPI display(U8G2_R2, /* clock=*/ 14, /* data=*/ 12, /* cs=*/ 13, /* dc=*/ 2, /* reset=*/ 16);
 
 time_t nowTime;
@@ -147,7 +146,7 @@ void setup() {
   pinMode(ALARMPIN, OUTPUT);
   pinMode(BACKLIGHTPIN, OUTPUT);
   analogWrite(BACKLIGHTPIN, 900); // Maximum is 1023
-#if (USE_HIGH_ALARM > 0)
+#ifdef USE_HIGH_ALARM
   digitalWrite(ALARMPIN, LOW); // Turn off alarm
 #else
   digitalWrite(ALARMPIN, HIGH); // Turn off alarm
@@ -163,13 +162,13 @@ void setup() {
   shortBeep();
   delay(1000);
 
-#if USE_WIFI_MANAGER > 0
+#ifdef USE_WIFI_MANAGER
   WiFi.persistent(true);
   WiFiManager wifiManager;
   wifiManager.setConfigPortalTimeout(600);
   wifiManager.autoConnect("IBEMath12864");
   Serial.println("Please connect WiFi IBEMath12864");
-  drawProgress(display, "请用手机设置本机WIFI", "SSID IBEMath12864");
+  drawProgress("请用手机设置本机WIFI", "SSID IBEMath12864");
 #else
   Serial.println("Scan WIFI");
   int intPreferredWIFI = 0;
@@ -199,7 +198,7 @@ void setup() {
 
   WiFi.persistent(true);
   WiFi.begin(WIFI_SSID[intPreferredWIFI], WIFI_PWD[intPreferredWIFI]);
-  drawProgress(display, "正在连接WIFI...", WIFI_SSID[intPreferredWIFI]);
+  drawProgress("正在连接WIFI...", WIFI_SSID[intPreferredWIFI]);
   int WIFIcounter = intPreferredWIFI;
   while (WiFi.status() != WL_CONNECTED) {
     int counter = 0;
@@ -214,7 +213,7 @@ void setup() {
     WIFIcounter++;
     if (WIFIcounter >= numWIFIs) WIFIcounter = 0;
     WiFi.begin(WIFI_SSID[WIFIcounter], WIFI_PWD[WIFIcounter]);
-    drawProgress(display, "正在连接WIFI...", WIFI_SSID[WIFIcounter]);
+    drawProgress("正在连接WIFI...", WIFI_SSID[WIFIcounter]);
   }
 #endif
 
@@ -222,7 +221,7 @@ void setup() {
 
   // Get time from network time service
   Serial.println("WIFI Connected");
-  drawProgress(display, "连接WIFI成功,", "正在同步时间...");
+  drawProgress("连接WIFI成功,", "正在同步时间...");
   configTime(TZ_SEC, DST_SEC, "pool.ntp.org");
   generateQuestion();
   questionCount = 1;
@@ -375,7 +374,7 @@ void draw(void) {
   }
 }
 
-void drawProgress(U8G2_ST7565_LM6059_F_4W_SW_SPI display, String labelLine1, String labelLine2) {
+void drawProgress(String labelLine1, String labelLine2) {
   display.clearBuffer();
   display.enableUTF8Print();
   display.setFont(u8g2_font_wqy12_t_gb2312); // u8g2_font_wqy12_t_gb2312, u8g2_font_helvB08_tf
@@ -417,7 +416,7 @@ char* string2char(String command) {
 }
 
 void shortBeep() {
-#if (USE_HIGH_ALARM > 0)
+#ifdef USE_HIGH_ALARM
   digitalWrite(ALARMPIN, HIGH);
   delay(150);
   digitalWrite(ALARMPIN, LOW);
@@ -429,7 +428,7 @@ void shortBeep() {
 }
 
 void longBeep() {
-#if (USE_HIGH_ALARM > 0)
+#ifdef USE_HIGH_ALARM
   digitalWrite(ALARMPIN, HIGH);
   delay(2000);
   digitalWrite(ALARMPIN, LOW);
