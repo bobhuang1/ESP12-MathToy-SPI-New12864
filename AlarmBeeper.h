@@ -12,6 +12,6 @@ void beepLong(int pin, bool activeHigh);  // 2000ms - alert/warning beep
 void beepOff(int pin, bool activeHigh);   // sets pin to its inactive level, no delay
 
 // A repeated short pulse pattern, e.g. for a "wrong answer" buzz or a rapid Geiger click.
-// times=8, onMs=30, offMs=30 reproduces the original "wrong answer" pattern from
-// Nano-MathToyMix100-12864; times=1, onMs=1, offMs=0 reproduces the Geiger-counter click.
+// times=8, onMs=30, offMs=30 gives a "wrong answer" buzz; times=1, onMs=1, offMs=0
+// gives a single rapid click (e.g. a Geiger-counter pulse).
 void beepPattern(int pin, bool activeHigh, uint8_t times, unsigned long onMs, unsigned long offMs);
