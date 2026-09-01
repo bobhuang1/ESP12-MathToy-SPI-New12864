@@ -29,8 +29,6 @@ updated.
   see [Nano-MathToyMix100-12864](https://github.com/bobhuang1/Nano-MathToyMix100-12864)
   for a version that also includes division (`generateMathQuestion`'s
   `includeDivision` parameter, passed `false` here).
-- The backlight auto-dim curve now comes from the shared
-  `BacklightController` library, which has more (and slightly different)
-  brightness steps than this sketch's own original curve - both aim for the
-  same result, but if the dimming feels off for this specific unit, tune it
-  via `backlight.update(biasLevel, dynamicLevel)` in `loop()`.
+- Backlight auto-dimming comes from the shared `BacklightController`
+  library. If the dimming feels off for a specific unit, tune it via
+  `backlight.update(biasLevel, dynamicLevel)` in `loop()`.
