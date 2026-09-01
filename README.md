@@ -12,14 +12,25 @@ A single push-button reveals the answer and advances to the next question.
 
 1. Install dependencies: `U8g2`, `WiFiManager`.
 2. **Before flashing, replace the placeholder values** at the top of the
-   .ino: `WIFI_SSID`/`WIFI_PWD` with your own network(s) - or better, enable
-   `USE_WIFI_MANAGER` instead of hardcoding credentials at all, which puts up
-   a "ESP8266-Setup" WiFi config portal on first boot.
+   .ino: `WIFI_SSIDS`/`WIFI_PASSWORDS` with your own network(s) - or better,
+   enable `USE_WIFI_MANAGER` instead of hardcoding credentials at all, which
+   puts up a "ESP8266-Setup" WiFi config portal on first boot.
+
+## Dependencies
+
+`StringHelpers`, `AlarmBeeper`, `MathQuizGenerator`, `BacklightController`,
+`WiFiMultiConnect`, `BootSplashBitmap` ([source](https://github.com/bobhuang1/ESP8266-Functions-Common)),
+vendored directly into this repo - re-copy from there if any of them are
+updated.
 
 ## Notes
 
-- `garfield`/`activeSymbole`/`inactiveSymbole` in `MathImages.h` are bitmap
-  data for the boot splash screen and unused status icons.
 - Only addition/subtraction/multiplication are generated (no division) -
   see [Nano-MathToyMix100-12864](https://github.com/bobhuang1/Nano-MathToyMix100-12864)
-  for a version that also includes division.
+  for a version that also includes division (`generateMathQuestion`'s
+  `includeDivision` parameter, passed `false` here).
+- The backlight auto-dim curve now comes from the shared
+  `BacklightController` library, which has more (and slightly different)
+  brightness steps than this sketch's own original curve - both aim for the
+  same result, but if the dimming feels off for this specific unit, tune it
+  via `backlight.update(biasLevel, dynamicLevel)` in `loop()`.
