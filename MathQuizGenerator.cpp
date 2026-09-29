@@ -4,7 +4,7 @@ String generateMathQuestion(String &answer, int numberCeiling, bool includeDivis
 	const String strPlusSign = "+";
 	const String strMinusSign = "-";
 	const String strMultiplySign = "X";
-	const String strDivideSign = String((char)247); // division sign, U+00F7
+	const String strDivideSign = "/"; // ASCII slash: u8g2 ASCII fonts have no U+00F7 division sign glyph, so byte 247 rendered as garbage
 	const String strEqualSign = "=";
 
 	String question = "";

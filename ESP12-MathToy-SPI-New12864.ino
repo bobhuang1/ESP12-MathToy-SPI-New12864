@@ -51,6 +51,7 @@ void setup() {
   delay(100);
   Serial.begin(115200);
   Serial.println("Begin");
+  randomSeed(analogRead(A0)); // vary the question sequence between boots (leave A0 unconnected)
 
   pinMode(BUTTONPIN, INPUT);
   pinMode(ALARMPIN, OUTPUT);
