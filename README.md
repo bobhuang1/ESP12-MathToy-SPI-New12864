@@ -32,3 +32,8 @@ updated.
 - Backlight auto-dimming comes from the shared `BacklightController`
   library. If the dimming feels off for a specific unit, tune it via
   `backlight.update(biasLevel, dynamicLevel)` in `loop()`.
+
+
+## License
+
+This project is free software, released under the **GNU General Public License v3.0**. You may redistribute and/or modify it under those terms; see [LICENSE.md](LICENSE.md) for the full text.
