@@ -80,7 +80,9 @@ String generateMathQuestion(String &answer, int numberCeiling, bool includeDivis
 		else if (secondOperationType == 2)
 		{
 			secondNumber = random(1, numberCeiling);
-			thirdNumber = random(1, (firstNumber - secondNumber));
+			// Subtract from the running total. (The old bound, firstNumber - secondNumber, was
+			// <= 1 about half the time, so the third operand was almost always 1.)
+			thirdNumber = random(1, firstNumber + secondNumber);
 			question = String(firstNumber) + strPlusSign + String(secondNumber) + strMinusSign + String(thirdNumber) + strEqualSign + "?";
 			answer = String(firstNumber) + strPlusSign + String(secondNumber) + strMinusSign + String(thirdNumber) + strEqualSign + String(firstNumber + secondNumber - thirdNumber);
 		}
