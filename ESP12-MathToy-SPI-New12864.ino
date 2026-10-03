@@ -1,6 +1,4 @@
 #include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h> // was <ESPHTTPClient.h>, a header that no longer exists in any current core
-#include <JsonListener.h>
 #include <stdio.h>
 #include <time.h>                   // struct timeval
 #include <coredecls.h>                  // settimeofday_cb()
@@ -23,6 +21,18 @@
 #define BUTTONPIN  4
 #define NUMBER_CEILING 100 // max random operand value for generated questions
 
+#ifdef USE_HIGH_ALARM
+const bool ALARM_ACTIVE_HIGH = true;
+#else
+const bool ALARM_ACTIVE_HIGH = false;
+#endif
+
+// How long setup() tries to join WiFi before starting the quiz offline. WiFi is
+// only needed for the clock in the corner.
+#define WIFI_CONNECT_TIMEOUT_MS 30000
+// time() values below this mean NTP hasn't synced yet (2020-09-13).
+#define MIN_VALID_EPOCH 1600000000
+
 // Fill in your own SSID/password pairs (or better, use USE_WIFI_MANAGER above
 // instead of hardcoding any of this). Never commit real WiFi credentials.
 const char* const WIFI_SSIDS[] = {"YOUR_SSID_1", "YOUR_SSID_2", "YOUR_SSID_3"};
@@ -31,9 +41,6 @@ const char* const WIFI_PASSWORDS[] = {"YOUR_PASSWORD_1", "YOUR_PASSWORD_2", "YOU
 U8G2_ST7565_LM6059_F_4W_SW_SPI display(U8G2_R2, /* clock=*/ 14, /* data=*/ 12, /* cs=*/ 13, /* dc=*/ 2, /* reset=*/ 16);
 
 BacklightController backlight;
-
-time_t nowTime;
-uint8_t draw_state = 0;
 
 int buttonState;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
@@ -51,16 +58,14 @@ void setup() {
   delay(100);
   Serial.begin(115200);
   Serial.println("Begin");
-  randomSeed(analogRead(A0)); // vary the question sequence between boots (leave A0 unconnected)
+  // Seed from the ESP8266 hardware RNG (A0 is the backlight's light sensor, so
+  // analogRead(A0) only gave the room's light level).
+  randomSeed(ESP.random());
 
   pinMode(BUTTONPIN, INPUT);
   pinMode(ALARMPIN, OUTPUT);
   backlight.begin(BACKLIGHTPIN);
-#ifdef USE_HIGH_ALARM
-  digitalWrite(ALARMPIN, LOW); // Turn off alarm
-#else
-  digitalWrite(ALARMPIN, HIGH); // Turn off alarm
-#endif
+  beepOff(ALARMPIN, ALARM_ACTIVE_HIGH);
 
   display.begin();
   display.setFontPosTop();
@@ -69,24 +74,30 @@ void setup() {
   display.clearBuffer();
   display.drawXBM(31, 0, 66, 64, garfield);
   display.sendBuffer();
-  beepShort(ALARMPIN, true);
+  beepShort(ALARMPIN, ALARM_ACTIVE_HIGH);
   delay(1000);
 
 #ifdef USE_WIFI_MANAGER
-  connectWiFiWithManager("ESP8266-Setup");
+  // Show the instructions while the portal is open, not after it closes.
   drawProgress("请用手机设置本机WIFI", "SSID ESP8266-Setup");
+  bool wifiOk = connectWiFiWithManager("ESP8266-Setup", WIFI_CONNECT_TIMEOUT_MS / 1000);
 #else
   Serial.println("Scan WIFI");
   drawProgress("正在连接WIFI...", "");
-  connectWiFi(WIFI_SSIDS, WIFI_PASSWORDS, 3);
+  bool wifiOk = connectWiFi(WIFI_SSIDS, WIFI_PASSWORDS, 3, 30, WIFI_CONNECT_TIMEOUT_MS);
 #endif
 
-  if (WiFi.status() != WL_CONNECTED) ESP.restart();
-
-  // Get time from network time service
-  Serial.println("WIFI Connected");
-  drawProgress("连接WIFI成功,", "正在同步时间...");
-  configTime(TZ_SEC_FOR(8), DST_SEC_FOR(0), DefaultNtpServer);
+  if (wifiOk)
+  {
+    // Get time from network time service
+    Serial.println("WIFI Connected");
+    drawProgress("连接WIFI成功,", "正在同步时间...");
+    configTime(TZ_SEC_FOR(8), DST_SEC_FOR(0), DefaultNtpServer);
+  }
+  else
+  {
+    Serial.println("No WIFI, running offline");
+  }
   currentQuestion = generateMathQuestion(currentAnswer, NUMBER_CEILING, false);
   questionCount = 1;
 }
@@ -104,7 +115,7 @@ void detectButtonPush() {
       buttonState = reading;
       if (buttonState == HIGH)
       {
-        beepShort(ALARMPIN, true);
+        beepShort(ALARMPIN, ALARM_ACTIVE_HIGH);
         if (currentMode == 0)
         {
           currentMode = 1;
@@ -132,24 +143,23 @@ void loop() {
   do {
     detectButtonPush();
     draw();
-    //    delay(100);
-    draw_state++;
   } while (display.nextPage());
 
   detectButtonPush();
-
-  if (draw_state >= 10)
-  {
-    draw_state = 0;
-  }
 }
 
 void draw(void) {
-  nowTime = time(nullptr);
-  struct tm* timeInfo;
-  timeInfo = localtime(&nowTime);
+  time_t nowTime = time(nullptr);
   char buff[20];
-  sprintf_P(buff, PSTR("%02d:%02d"), timeInfo->tm_hour, timeInfo->tm_min);
+  if (nowTime < MIN_VALID_EPOCH)
+  {
+    strcpy(buff, "--:--"); // no NTP time yet (or no WiFi)
+  }
+  else
+  {
+    struct tm* timeInfo = localtime(&nowTime);
+    sprintf_P(buff, PSTR("%02d:%02d"), timeInfo->tm_hour, timeInfo->tm_min);
+  }
 
   display.setFont(u8g2_font_helvB10_tf); // u8g2_font_helvB08_tf, u8g2_font_6x13_tn
   display.setCursor(1, 1);
@@ -161,16 +171,10 @@ void draw(void) {
   display.print(buff);
 
   display.setFont(u8g2_font_helvB12_tf); // u8g2_font_helvB08_tf, u8g2_font_10x20_tf
-  int stringWidth = display.getStrWidth(string2char(currentAnswer));
+  const String& shown = currentMode == 0 ? currentQuestion : currentAnswer;
+  int stringWidth = display.getStrWidth(string2char(shown));
   display.setCursor((128 - stringWidth) / 2, 28);
-  if (currentMode == 0)
-  {
-    display.print(currentQuestion);
-  }
-  else
-  {
-    display.print(currentAnswer);
-  }
+  display.print(shown);
 }
 
 void drawProgress(String labelLine1, String labelLine2) {
@@ -194,16 +198,5 @@ void drawProgress(String labelLine1, String labelLine2) {
   display.sendBuffer();
 }
 
-/*
-
-  display.setFont(u8g2_font_helvR24_tn); // u8g2_font_inb21_ mf, u8g2_font_helvR24_tn
-  //  sprintf_P(buff, PSTR("%02d:%02d:%02d"), timeInfo->tm_hour, timeInfo->tm_min, timeInfo->tm_sec);
-  sprintf_P(buff, PSTR("%02d:%02d"), timeInfo->tm_hour, timeInfo->tm_min);
-  stringWidth = display.getStrWidth(buff);
-  display.drawStr((128 - 30 - stringWidth) / 2, 11, buff);
-  display.setFont(u8g2_font_helvB08_tf);
-  display.drawHLine(0, 51, 128);
-  display.setFont(u8g2_font_helvR24_tn);
-*/
 // each Chinese character's length is 3 in UTF-8
 

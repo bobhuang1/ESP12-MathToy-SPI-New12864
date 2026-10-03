@@ -4,6 +4,8 @@ An ESP-12 (ESP8266) version of the math-practice toy: generates a mix of
 addition/subtraction/multiplication questions on a 128x64 SPI LCD, syncs a
 WiFi-based clock via NTP, and auto-dims the backlight based on ambient light.
 A single push-button reveals the answer and advances to the next question.
+WiFi is optional: if no network is found within 30 s the quiz starts anyway
+and the clock shows `--:--`.
 
 <img src="MathToy1.jpg" alt="Math Toy" width="400"><br/>
 <img src="MathToy2.jpg" alt="Math Toy" width="400">
